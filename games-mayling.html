@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <title>jQuery九宫格大转盘抽奖</title>
+    <style>
+        #lottery{width:100%;margin:0 auto;border:4px solid #ccc;}
+        #lottery table{  margin: 0 auto;background-color: #fff;}
+        #lottery table td{position:relative;width: 30%; padding: 20px;height: 100%; text-align:center;color:#333;}
+        #lottery table td img{display:block;width:100%; margin: 0 auto;}
+        #lottery table td a{background: rgba(255,255,2,1); width:100%;height: 100%;margin: 0 auto;display:block;text-decoration:none;}
+        #lottery table td a:hover{background: rgba(255,255,2,.4);}
+        .active {
+            background: rgba(255,5,255,.2);
+        }
+        /*#lottery table td.active .mask{display:block;}*/
+        /*.mask{*/
+            /*width:100%;*/
+            /*height:100%;*/
+            /*position:absolute;*/
+            /*left:0;*/
+            /*top:0;*/
+            /*background:rgba(0,0,0,.6) no-repeat;*/
+            /*display:none;*/
+        /*}*/
+    </style>
+</head>
+<body class="keBody">
+<!--效果html开始-->
+<div id="lottery">
+    <table border="0" cellpadding="0" cellspacing="0">
+        <tr>
+            <td class="lottery-unit lottery-unit-0"><img src="img/mooncake－share.png"><div class="mask"></div></td>
+            <td class="lottery-unit lottery-unit-1"><img src="img/mooncake－share.png"><div class="mask"></div></td>
+            <td class="lottery-unit lottery-unit-2"><img src="img/mooncake－share.png"><div class="mask"></div></td>
+        </tr>
+        <tr>
+            <td class="lottery-unit lottery-unit-7"><img src="img/mooncake－share.png"><div class="mask"></div></td>
+            <td><a class="prz_btn" href="javascript:;"></a></td>
+            <td class="lottery-unit lottery-unit-3"><img src="img/mooncake－share.png"><div class="mask"></div></td>
+        </tr>
+        <tr>
+            <td class="lottery-unit lottery-unit-6"><img src="img/mooncake－share.png"><div class="mask"></div></td>
+            <td class="lottery-unit lottery-unit-5"><img src="img/mooncake－share.png"><div class="mask"></div></td>
+            <td class="lottery-unit lottery-unit-4"><img src="img/mooncake－share.png"><div class="mask"></div></td>
+        </tr>
+    </table>
+</div>
+
+<script src="http://code.jquery.com/jquery-latest.js"></script>
+<script type="text/javascript">
+$(function(){
+
+    function result(){
+        alert('奖品');
+    }
+
+    var index = -1;//当前转动到哪个位置，起点位置
+    var count = 8; //总共有多少个位置
+    var times = 0; //次数
+    var timer = 0; //定时器id
+    var cycle = 10; //转动基本次数：即至少需要转动多少次再进入抽奖环节
+    var speed = 130;//转到的初始速度
+    var prize = -1;//中奖的位置
+    var prize_result = 4; //手动设置奖品位置(ajax返回的结果)
+    
+    // 1.一次动画效果
+    function play(){
+        var box = $('#lottery');
+        box.find('.lottery-unit-'+index).removeClass('active');
+        index +=1;
+        if(index > count-1 ) {
+           index = 0;
+        }
+        box.find('.lottery-unit-'+index).addClass('active');
+    }
+
+    // 2.设置它循环跳动
+    function circulation(){
+        if(times > cycle + 10 && prize == index){
+            clearTimeout(timer); // 关闭定时器
+            // console.log(times+'次^^^^'+speed+'速度^^^^'+prize+'奖品位置'+'stop');
+            result(); //显示后台返回结果 prize
+            click = true;
+            speed = 130;
+            prize = -1;
+            times = 0;
+            return false;
+        } else {
+            if (times < cycle){
+                speed -= 5;//加速
+            } else if(times == cycle) {
+                prize = prize_result;
+                // var index = Math.random()*(count)| 0 ;  prize = index;
+            } else {
+                if (times > cycle +10 && (prize == index +1 || (prize == 0 && index == 7))){
+                    speed += 200;//大减速 至停止下来
+                } else {
+                    speed +=20;//减速
+                }
+            }
+            if (speed < 40){
+                speed = 40;
+            }
+            //定时器
+            timer = setTimeout(function(){
+                console.log(times+'次^^^^'+speed+'速度^^^^'+prize+'奖品位置');
+                circulation(); //自身调用，循环
+            },speed);
+        }
+        times += 1;
+        play();// 一次动画效果
+    }
+
+    //节流---防止重复点击(限制200ms内，多次点击，只计算成1次)
+    function throttle(method, context){
+        clearTimeout(method.Id);
+        method.Id = setTimeout(function(){
+            method.call(context);
+        },200);
+    }
+    // 1.点击一下按钮，调动一个方格
+    $('.prz_btn').on('click',function(){
+        throttle(circulation);
+
+        // var user = $('.phone').val();
+        // var islogin = checkLogin();
+        // if(islogin) {//已登录用户才能去抽奖
+        //     if (!click) {
+        //         return false;//防止重复点击
+        //     } else {
+        //         $.ajax({
+        //             url: 'api/index',
+        //             type: 'post',
+        //             data: {user: user},
+        //             dataType: 'json',
+        //             success: function(response) {
+        //                 if(response.code == 0) {    //进行中
+        //                     // response.data.prizeNum;
+        //                     var rewardid = response["message"]["rewardid"];
+        //                     var cardno = response["message"]["rewardCardNo"];
+        //                     var passno = response["message"]["rewardCardPass"];
+        //
+        //                     switch(response.prizeType){
+        //                         case 1:
+        //                             '奖品1';
+        //                             index=1;
+        //                             break;
+        //                         case 2:
+        //                             '奖品2';
+        //                             index=2;
+        //                             break;
+        //                         case 3:
+        //                             '奖品3';
+        //                             index=2;
+        //                             break;
+        //                     }
+        //                     circulation();
+        //                     click = false;
+        //                     return false;
+        //                 } else {   //无奖品
+        //                     alert('无奖品');
+        //                 }
+        //             }
+        //         });
+        //     }
+        // }
+    });
+
+});
+</script>
+<!--效果html结束-->
+
+</body>
+</html>
